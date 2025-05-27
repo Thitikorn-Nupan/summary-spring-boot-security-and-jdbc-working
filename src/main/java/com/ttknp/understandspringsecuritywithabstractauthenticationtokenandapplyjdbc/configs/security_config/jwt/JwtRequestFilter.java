@@ -5,6 +5,7 @@ import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapply
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.entities.login.LoginModel;
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.services.UsefulService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,6 +52,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+        /*
+		theResponse.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, this.allowOrigin);
+		theResponse.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, PUT, OPTIONS, DELETE");
+		theResponse.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "X-PINGOTHER,Content-Disposition,Content-Type,content-length,X-Requested-With,accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Authorization,X-client-id,X-program-id");
+		theResponse.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "xsrf-token,Content-Disposition,Content-Type,content-length");
+        */
 
         String token = request.getHeader("Authorization");
         Map<String,Object> user = null;
@@ -71,7 +78,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     .print(stringBuilder);
             response.getWriter()
                     .flush();
-            // chain.doFilter(request, response);
             return;
         }
 
@@ -83,7 +89,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 // log.debug("claims: {}", claims.get("user")); // {uid=59aef92e-3d50-45d2-bdfb-19051c6df16f, password=MQ==, createBy=Admin, role=ADMIN, email=Admin@hotmail.com, username=Admin}
                 user  = UsefulService.convertObjectToMap(claims.get("user"));
                 log.debug("user {}",user);
-            } catch (IllegalAccessException | SignatureException e) {
+            } catch (IllegalAccessException | SignatureException | ExpiredJwtException e) {
                 StringBuilder stringBuilder = getErrorStringBuilder(request, e,403 ,"Error while parsing token");
                 response.setStatus(403);
                 response.setContentType("application/json");
@@ -102,6 +108,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String email = (String) user.get("email");
         String role = (String) user.get("role");
         String createBy = (String) user.get("createBy");
+
         LoginModel loginModel = new LoginModel();
         loginModel.setUuid(UsefulService.convertStringToUuid(uuid));
         loginModel.setUsername(username);

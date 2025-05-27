@@ -2,6 +2,7 @@ package com.ttknp.understandspringsecuritywithabstractauthenticationtokenandappl
 
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.configs.security_config.jwt.JwtAuthenticateToken;
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.configs.security_config.jwt.JwtService;
+import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.entities.data.Student;
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.entities.login.LoginModel;
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.entities.login.LoginRequest;
 import com.ttknp.understandspringsecuritywithabstractauthenticationtokenandapplyjdbc.entities.login.LoginResponse;
@@ -17,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -62,9 +64,24 @@ public class CompoundControls {
         return "data-a";
     }
 
+    @PostMapping("/demo-login/reads")
+    private List<Student> demoResponse(@RequestBody LoginRequest loginRequest) { // Internally Spring MVC uses a component called a HttpMessageConverter to convert the Http request to an object representation and back.
+        return loginRequest.getUsername().equals("Admin") ?
+                List.of(
+                        new Student("Alex Slider", 19),
+                        new Student("Jason Born", 20)
+                ) :
+                null;
+    }
+
+    @PostMapping("/demo-login/read")
+    private Student demoResponse(@RequestBody Student student) {
+        return student;
+    }
+
     // do after logged in success
     @GetMapping("/check-claims")
-    private Map<String,Object> checkClaims() throws IllegalAccessException {
+    private Map<String, Object> checkClaims() throws IllegalAccessException {
         // Claims claims = JwtSpringSecurityContextHelper.getAuthenticationFromContext().getClaim();
         Claims claims = JwtSpringSecurityContextHelper.getClaim();
         log.debug("claims : {}", claims);
@@ -72,7 +89,7 @@ public class CompoundControls {
     }
 
     @GetMapping("/check-is-token-expired")
-    private Boolean checkToken()  {
+    private Boolean checkToken() {
         // JwtAuthenticateToken jwtAuthenticateToken = JwtSpringSecurityContextHelper.getAuthenticationFromContext();
         Boolean isTokenExpired = JwtSpringSecurityContextHelper.isTokenExpired();
         log.debug("isTokenExpired : {}", isTokenExpired);
@@ -80,24 +97,23 @@ public class CompoundControls {
     }
 
     @GetMapping("/check-expiration-date")
-    private Date checkExpirationDate()  {
+    private Date checkExpirationDate() {
         // JwtAuthenticateToken jwtAuthenticateToken = JwtSpringSecurityContextHelper.getAuthenticationFromContext();
         return JwtSpringSecurityContextHelper.getExpirationDate();
     }
 
     @GetMapping("/check-issue-date")
-    private Date checkIssueDate()  {
+    private Date checkIssueDate() {
         // JwtAuthenticateToken jwtAuthenticateToken = JwtSpringSecurityContextHelper.getAuthenticationFromContext();
         return JwtSpringSecurityContextHelper.getIssueDate();
     }
 
     @GetMapping("/check-principle")
-    private Object checkPrinciple(@RequestParam Character key)  {
+    private Object checkPrinciple(@RequestParam Character key) {
         JwtAuthenticateToken jwtAuthenticateToken = JwtSpringSecurityContextHelper.getAuthenticationFromContext();
         if (key.equals('A')) {
             return authenticationManager.authenticate(jwtAuthenticateToken).getPrincipal();
-        }
-        else if (key.equals('J')) {
+        } else if (key.equals('J')) {
             return JwtSpringSecurityContextHelper.getPrincipal();
         }
         return null;
